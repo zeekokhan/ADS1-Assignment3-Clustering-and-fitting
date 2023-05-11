@@ -61,3 +61,75 @@ extracted_results = df[df["Indicator Name"].isin(indicators)]
 # Extracting data for only countries we are interested in
 countries_ls = [country.name for country in list(pycountry.countries)]
 extracted_resutls = extracted_results[extracted_results["Country Name"].isin(countries_ls)]
+
+
+# In[ ]:
+
+
+#missing values imputation
+data = extracted_resutls.fillna(method='ffill').fillna(method='bfill')
+pivot_table = data.pivot_table(index='Country Name', columns='Indicator Name', values='2020')
+
+
+# In[ ]:
+
+
+plt.figure(figsize=(15,5))
+sns.lineplot(pivot_table['Arable land (% of land area)'].sort_values(ascending=False)[0:10])
+plt.title('Countries Standing by Arable land (% of land area)')
+
+
+# In[ ]:
+
+
+sns.displot(np.log(pivot_table['Forest area (sq. km)']))
+plt.title('Distribution of Forest Area in Sq)')  #this data is plotted data log transformation
+
+
+# In[ ]:
+
+
+ub_growth=pivot_table['Urban population growth (annual %)'].sort_values(ascending=False)[0:10]
+plt.figure(figsize=(15,5))
+plt.title('Top 10 Countries with Highest Urbanization in 2020')
+plt.bar(x=ub_growth.index,height=ub_growth.values)
+
+
+# In[ ]:
+
+
+sns.displot(pivot_table['CO2 emissions (kt)'])
+plt.title('Distribution of CO2 for 2020')
+
+
+# In[ ]:
+
+
+# data Normalization
+scaled_data = min_max_scaler.fit_transform(pivot_table.values)
+min=np.min(pivot_table.values)
+max=np.max(pivot_table.values)
+
+
+# In[ ]:
+
+
+# number of clusters
+num_clusters = 3
+
+
+# In[ ]:
+
+
+#KMeans Clustering
+kmeans = KMeans(n_clusters=num_clusters, random_state=22)
+cluster_labels = kmeans.fit_predict(scaled_data)
+
+
+# In[ ]:
+
+
+# Add the cluster labels to the dataset
+pivot_table["Cluster"] = cluster_labels
+pivot_table.groupby("Cluster").mean()
+labels = indicators
