@@ -133,3 +133,66 @@ cluster_labels = kmeans.fit_predict(scaled_data)
 pivot_table["Cluster"] = cluster_labels
 pivot_table.groupby("Cluster").mean()
 labels = indicators
+
+
+# In[ ]:
+
+
+# Selecting one country from each cluster
+pivot_table.groupby("Cluster").last()
+
+# Comparing values for each country
+pivot_table.groupby("Cluster").last().plot(kind="bar", figsize=(16, 6))
+plt.title("Clusters")
+plt.ylabel("Value Measured")
+plt.show()
+
+
+# In[ ]:
+
+
+def ln_function(x, a, b):
+    return a*x + b
+
+def model(x_values, y_values, linear_func, sigma=[1.0, 1.0]):
+    popt, pcov = curve_fit(linear_func, x_values, y_values)
+    x_pred = np.arange(2020, 2030)
+    y_pred = ln_function(x_pred, *popt)
+
+
+
+    # Estimate CI for predicted values
+    model = sm.OLS(y_values, sm.add_constant(x_values))
+    fitted_model = model.fit()
+    prediction = fitted_model.get_prediction(sm.add_constant(x_pred))
+    mean_values = prediction.predicted_mean
+    lower = prediction.conf_int()[:, 0]
+    upper = prediction.conf_int()[:, 1]
+
+    
+    
+    print("Predictions",y_pred)
+    
+    
+    
+    plt.figure(figsize=(12, 5))
+    plt.plot(x_values, y_values, '1', label='The Data',color='red')
+    plt.plot(x_pred, y_pred, 'r-', label='Forcasted',color='black')
+    plt.fill_between(x_pred, lower, upper, color='red', alpha=0.2, label='CI')
+    plt.legend(loc='best')
+    plt.title("Population, total")
+    plt.xlabel('Year')
+    plt.ylabel('Total Population')
+    plt.show()
+
+
+# In[ ]:
+
+
+#getting required data to get train our model
+values = country_df[("World", "Population, total")]
+
+X = values.index.astype("int")
+y = values.values.astype("float64")
+
+model(X, y, ln_function)
